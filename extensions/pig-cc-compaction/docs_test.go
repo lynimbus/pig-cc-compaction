@@ -104,16 +104,24 @@ func corpusNames(corpus map[string]string) string {
 //     machine prerequisite anchored by cgoDisabledEnv;
 //   - extension.go's pluginEnv and traceEnv values, extracted from the source
 //     rather than duplicated here, appear verbatim in both docs.
+//
+// The docs live at the package root, one level above this Go module, which
+// PiG's package layout puts under extensions/.
+const (
+	readmePath = "../../README.md"
+	guidePath  = "../../docs/verify.md"
+)
+
 func TestDocsMatchCode(t *testing.T) {
-	readme := readDoc(t, "README.md")
-	guide := readDoc(t, filepath.Join("docs", "verify.md"))
+	readme := readDoc(t, readmePath)
+	guide := readDoc(t, guidePath)
 
 	docs := []struct {
 		name string
 		body string
 	}{
 		{"README.md", readme},
-		{"docs/verify.md", guide},
+		{guidePath, guide},
 	}
 	for _, doc := range docs {
 		if missing := missingDocStrings(doc.name, doc.body, documentedStrings); len(missing) > 0 {
@@ -202,7 +210,7 @@ func TestDocsMatchCode(t *testing.T) {
 // end-to-end guide: the RPC invocation, the compact command, the extension
 // event field, the cache-read metric, and the troubleshooting terms.
 func TestVerifyGuideCoversAssertions(t *testing.T) {
-	guide := readDoc(t, filepath.Join("docs", "verify.md"))
+	guide := readDoc(t, guidePath)
 
 	required := []string{
 		"--mode rpc",

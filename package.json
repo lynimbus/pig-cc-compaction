@@ -1,0 +1,11 @@
+{
+  "name": "pig-cc-compaction",
+  "version": "0.1.0",
+  "description": "Claude Code style context compaction for PiG that keeps the provider prompt cache warm",
+  "repository": "github:lynimbus/pig-cc-compaction",
+  "license": "MIT",
+  "keywords": ["pig-package", "pig-extension", "compaction", "prompt-cache"],
+  "pi": {
+    "extensions": ["extensions/pig-cc-compaction"]
+  }
+}

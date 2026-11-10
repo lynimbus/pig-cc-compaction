@@ -10,11 +10,10 @@
 2. 扩展已安装，并能在 `/cc-compact status` 里看到 `pig-cc-compaction status`。如果还没安装：
 
    ```bash
-   repo=/absolute/path/to/pig-cc-compaction
-   PIG_USE_PI_DIRS=1 pig install "$repo"
+   PIG_USE_PI_DIRS=1 pig install https://github.com/lynimbus/pig-cc-compaction
    ```
 
-   注意 `repo` 的最后一级目录必须是 `pig-cc-compaction`；直接安装一个叫 `root` 的目录会得到 `name_mismatch`。如果不用 `PIG_USE_PI_DIRS=1`，把下文的 `~/.pi` 换成 `~/.pig`，项目设置目录也从 `.pi` 换成 `.pig`。
+   仓库是 Package 布局，扩展模块在 `extensions/pig-cc-compaction`；想装本地改动就直接指模块目录：`PIG_USE_PI_DIRS=1 pig install ./extensions/pig-cc-compaction`。模块目录名必须是 `pig-cc-compaction`（注册身份同名），否则会得到 `name_mismatch`。如果不用 `PIG_USE_PI_DIRS=1`，把下文的 `~/.pi` 换成 `~/.pig`，项目设置目录也从 `.pi` 换成 `.pig`。
 
 3. 已经登录至少一个支持 prompt cache、且 usage 里返回 cache read token 的 provider；`pig` 的默认模型可用。
 4. 仓库根执行 `sh test.sh` 全绿。单元测试覆盖 JS 策略、driver、捕获表和命令解析；本指南只验证真实宿主链路。
@@ -25,10 +24,11 @@
 
 ```bash
 set -eu
-repo=/absolute/path/to/pig-cc-compaction
+pkg=/absolute/path/to/pig-cc-compaction
+repo=$pkg/extensions/pig-cc-compaction
 rm -rf /tmp/cctest
 mkdir -p /tmp/cctest/.pi
-cp "$repo/README.md" "$repo/pig-cc-compaction.md" /tmp/cctest/
+cp "$pkg/README.md" "$pkg/pig-cc-compaction.md" /tmp/cctest/
 printf '%s\n' '{"compaction":{"keepRecentTokens":100}}' > /tmp/cctest/.pi/settings.json
 cd /tmp/cctest
 
@@ -163,10 +163,11 @@ awk '/3\. Files and Code Sections/,/4\. Errors and fixes/' now-summary.txt
 本地还可先跑确定性的单元测试，确认指令拼接本身没问题：
 
 ```bash
+cd "$repo"
 GOFLAGS=-mod=readonly go test -modfile=.cache/go.local.mod -run 'TestPlanCustomInstructions|TestCompactCommandNowCarriesInstructions|TestParseSummaryGatesIncompleteReplies|TestBeforeCompactAppendsFileOperations|TestBeforeCompactAppendsTurnContext|TestSummarizeTurnPrefixPromptKeepsPisShape|TestDecodeCompactEventKeepsTheTurnPrefix|TestSettingsReport'
 ```
 
-（该命令需要先在仓库根跑过一次 `sh test.sh` 生成 `.cache/go.local.mod`。）
+（该命令在模块目录执行，并需要先在仓库根跑过一次 `sh test.sh` 生成 `.cache/go.local.mod`。）
 
 ### 断言 5：边界情况回退 PiG，并在 trace 里留下证据
 

@@ -36,13 +36,25 @@ PiG 的 Claude Code 式自动压缩扩展：Go 扩展负责与 PiG 宿主交互�
 
 ## 2. 装配与构建
 
+仓库是 Package 布局，扩展本体在 `extensions/pig-cc-compaction/`：
+
+```text
+pig-cc-compaction/
+├── package.json                     {"pi": {"extensions": ["extensions/pig-cc-compaction"]}}
+├── README.md
+├── docs/verify.md
+└── extensions/pig-cc-compaction/     Go 模块：go.mod、*.go、plugin/compaction.js、test.sh
+```
+
+这个布局是云端安装能生效的前提。仓库根同时放 `package.json` 与 `go.mod` 会被判成“两种语言”，而只有 `package.json` 时扩展又不在这棵树里，两种都会让 `pig install` 记下包名却加载不到东西。
+
 `go.mod` 钉住的是 pig 随包发布的 SDK 版本：
 
 ```go
 require github.com/MichaelKinsy/PiG/extensions/sdk v0.7.0
 ```
 
-这个版本能直接从 module cache 解析，所以裸 `go build ./...`、`go vet ./...` 和编辑器都能正常工作，不需要额外配置。真正的构建与测试走的是 pig 本机暂存的那份 SDK：pig 安装扩展时会用自己的 `replace` 替换它；`sh test.sh` 会扫描 `$HOME/.pig/state/pigsdk/sdk-*`，在 `.cache/go.local.mod` 里生成同一个 `replace`，复制 `go.sum` 后以 `-mod=readonly` 跑 `go vet` 与 `go test`，保证测的就是 pig 会用来构建的那份源码。`.cache/` 已被忽略，不会污染包根目录。
+这个版本能直接从 module cache 解析，所以裸 `go build ./...`、`go vet ./...` 和编辑器都能正常工作，不需要额外配置。真正的构建与测试走的是 pig 本机暂存的那份 SDK：pig 安装扩展时会用自己的 `replace` 替换它；`sh test.sh` 会扫描 `$HOME/.pig/state/pigsdk/sdk-*`，在模块目录的 `.cache/go.local.mod` 里生成同一个 `replace`，复制 `go.sum` 后以 `-mod=readonly` 跑 `go vet` 与 `go test`，保证测的就是 pig 会用来构建的那份源码。`.cache/` 已被 `.gitignore` 的 `**/.cache/` 覆盖。
 
 `go.mod` 还必须声明 moejs 自己的两个间接依赖：
 
@@ -61,20 +73,28 @@ updates to go.mod needed
 
 `test.sh` 固定 `-mod=readonly`，就是为了让这类缺失在本地直接失败，而不是等到安装时才发现。补依赖时不要用 `-mod=mod` 把问题掩盖掉。
 
-本地自检：
+本地自检（仓库根的 `test.sh` 只做转进模块目录）：
 
 ```bash
 sh test.sh
 ```
 
-安装时用 pig 的常规安装流程，例如：
+安装。从云端一条命令：
 
 ```bash
-pig install /path/to/pig-cc-compaction
-pig install --validate-only --json /path/to/pig-cc-compaction
+pig install https://github.com/lynimbus/pig-cc-compaction
 ```
 
-扩展的注册身份是 `pig-cc-compaction`，**目录名也要是 `pig-cc-compaction`**；直接安装一个叫 `root` 之类的目录会报 `name_mismatch`（见验证指南的排错清单）。
+它按 `package.json` 找到 `extensions/pig-cc-compaction` 并构建。装完用 `pig list` 确认有 `git:github.com/lynimbus/pig-cc-compaction`，用 `/cc-compact status` 确认插件来源是 `embedded`。更新用 `pig update git:github.com/lynimbus/pig-cc-compaction`，卸载用 `pig remove` 加同一个源。
+
+本地开发时直接指模块目录，改动不必等推送：
+
+```bash
+pig install ./extensions/pig-cc-compaction
+pig install --validate-only --json ./extensions/pig-cc-compaction
+```
+
+也可以 `pig install .` 装整个 Package，两种等价。扩展的注册身份是 `pig-cc-compaction`，**目录名也要是 `pig-cc-compaction`**；装一个叫 `cc` 或 `root` 的目录会报 `name_mismatch`（见验证指南的排错清单）。
 
 ## 3. 前置条件
 
