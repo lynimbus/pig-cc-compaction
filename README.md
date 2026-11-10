@@ -85,7 +85,7 @@ sh test.sh
 pig install https://github.com/lynimbus/pig-cc-compaction
 ```
 
-它按 `package.json` 找到 `extensions/pig-cc-compaction` 并构建。装完用 `pig list` 确认有 `git:github.com/lynimbus/pig-cc-compaction`，用 `/cc-compact status` 确认插件来源是 `embedded`。更新用 `pig update git:github.com/lynimbus/pig-cc-compaction`，卸载用 `pig remove` 加同一个源。
+它按 `package.json` 找到 `extensions/pig-cc-compaction` 并构建，克隆落在 `~/.pi/agent/git/github.com/lynimbus/pig-cc-compaction`。装完 `pig list` 里会多一条同名包（源字符串就是安装时写的那个 URL），`/cc-compact status` 的 plugin 行应是 `embedded`，`pig status` 的 extensions 计数应比装之前多 1。更新和卸载用同一个源字符串：`pig update https://github.com/lynimbus/pig-cc-compaction`、`pig remove https://github.com/lynimbus/pig-cc-compaction`。
 
 本地开发时直接指模块目录，改动不必等推送：
 
